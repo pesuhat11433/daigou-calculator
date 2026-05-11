@@ -1,0 +1,563 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>日本代購定價計算機</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #FDF8F0;
+    --card: #FFFFFF;
+    --accent: #D4521A;
+    --accent-light: #FAE8DE;
+    --accent-dark: #A83D10;
+    --text: #1A1208;
+    --text-sub: #6B5C44;
+    --text-hint: #A8947A;
+    --border: #E8DDD0;
+    --result-bg: #1A1208;
+    --result-text: #FDF8F0;
+    --shadow: 0 4px 24px rgba(80,40,10,0.10);
+  }
+
+  body {
+    font-family: 'Noto Sans TC', sans-serif;
+    background: var(--bg);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 32px 16px;
+  }
+
+  .wrapper {
+    width: 100%;
+    max-width: 520px;
+  }
+
+  .header {
+    text-align: center;
+    margin-bottom: 36px;
+  }
+
+  .header .flag {
+    font-size: 52px;
+    display: block;
+    margin-bottom: 12px;
+    animation: float 3s ease-in-out infinite;
+  }
+
+  @keyframes float {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-6px); }
+  }
+
+  .header h1 {
+    font-size: 28px;
+    font-weight: 900;
+    color: var(--text);
+    letter-spacing: -0.5px;
+    line-height: 1.2;
+  }
+
+  .header p {
+    font-size: 16px;
+    color: var(--text-sub);
+    margin-top: 8px;
+  }
+
+  .card {
+    background: var(--card);
+    border-radius: 24px;
+    padding: 36px 32px;
+    box-shadow: var(--shadow);
+    border: 1.5px solid var(--border);
+    margin-bottom: 20px;
+  }
+
+  .input-section label {
+    display: block;
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--text);
+    margin-bottom: 12px;
+  }
+
+  .input-section label span {
+    font-size: 14px;
+    font-weight: 400;
+    color: var(--text-hint);
+    margin-left: 6px;
+  }
+
+  .input-row {
+    display: flex;
+    align-items: center;
+    gap: 0;
+    border: 2px solid var(--border);
+    border-radius: 16px;
+    overflow: hidden;
+    transition: border-color 0.2s;
+    background: #FDFAF6;
+  }
+
+  .input-row:focus-within {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 4px rgba(212,82,26,0.12);
+  }
+
+  .input-prefix {
+    background: var(--accent-light);
+    color: var(--accent-dark);
+    font-size: 22px;
+    font-weight: 700;
+    padding: 18px 20px;
+    user-select: none;
+    white-space: nowrap;
+  }
+
+  input[type="number"] {
+    flex: 1;
+    border: none;
+    outline: none;
+    font-family: 'Noto Sans TC', sans-serif;
+    font-size: 32px;
+    font-weight: 700;
+    color: var(--text);
+    padding: 18px 20px;
+    background: transparent;
+    min-width: 0;
+    -moz-appearance: textfield;
+  }
+
+  input[type="number"]::-webkit-outer-spin-button,
+  input[type="number"]::-webkit-inner-spin-button { -webkit-appearance: none; }
+
+  .clear-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 18px 16px;
+    color: var(--text-hint);
+    font-size: 22px;
+    transition: color 0.15s;
+    display: flex;
+    align-items: center;
+  }
+
+  .clear-btn:hover { color: var(--accent); }
+
+  .hint {
+    font-size: 14px;
+    color: var(--text-hint);
+    margin-top: 10px;
+    text-align: right;
+  }
+
+  .divider {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin: 28px 0;
+    color: var(--text-hint);
+    font-size: 14px;
+  }
+
+  .divider::before, .divider::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+  }
+
+  .breakdown {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+
+  .breakdown-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .breakdown-row .label {
+    font-size: 16px;
+    color: var(--text-sub);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .breakdown-row .label .dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--border);
+    flex-shrink: 0;
+  }
+
+  .breakdown-row .label .dot.orange { background: #F0A060; }
+  .breakdown-row .label .dot.red { background: var(--accent); }
+  .breakdown-row .label .dot.dark { background: var(--text-sub); }
+
+  .breakdown-row .value {
+    font-size: 18px;
+    font-weight: 500;
+    color: var(--text);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .result-card {
+    background: var(--result-bg);
+    border-radius: 24px;
+    padding: 36px 32px;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 8px 40px rgba(80,40,10,0.25);
+  }
+
+  .result-card::before {
+    content: '';
+    position: absolute;
+    top: -60px; right: -60px;
+    width: 180px; height: 180px;
+    border-radius: 50%;
+    background: rgba(212,82,26,0.15);
+    pointer-events: none;
+  }
+
+  .result-card::after {
+    content: '';
+    position: absolute;
+    bottom: -40px; left: -40px;
+    width: 120px; height: 120px;
+    border-radius: 50%;
+    background: rgba(212,82,26,0.10);
+    pointer-events: none;
+  }
+
+  .result-label {
+    font-size: 16px;
+    color: rgba(253,248,240,0.55);
+    letter-spacing: 2px;
+    font-weight: 500;
+    margin-bottom: 12px;
+    position: relative;
+  }
+
+  .result-price {
+    font-size: 64px;
+    font-weight: 900;
+    color: var(--result-text);
+    line-height: 1;
+    letter-spacing: -2px;
+    position: relative;
+    transition: all 0.25s ease;
+  }
+
+  .result-price .currency {
+    font-size: 28px;
+    font-weight: 700;
+    vertical-align: super;
+    margin-right: 4px;
+    opacity: 0.7;
+  }
+
+  .result-sub {
+    font-size: 14px;
+    color: rgba(253,248,240,0.45);
+    margin-top: 12px;
+    position: relative;
+  }
+
+  .result-profit {
+    display: inline-block;
+    background: rgba(212,82,26,0.35);
+    color: #FFCFB0;
+    font-size: 14px;
+    font-weight: 700;
+    padding: 6px 16px;
+    border-radius: 100px;
+    margin-top: 16px;
+    position: relative;
+  }
+
+  .empty-state {
+    font-size: 18px;
+    color: rgba(253,248,240,0.30);
+    padding: 8px 0;
+  }
+
+  .settings-toggle {
+    text-align: center;
+    margin-top: 16px;
+  }
+
+  .settings-toggle button {
+    background: none;
+    border: 1.5px solid var(--border);
+    border-radius: 100px;
+    padding: 10px 24px;
+    font-family: 'Noto Sans TC', sans-serif;
+    font-size: 14px;
+    color: var(--text-sub);
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .settings-toggle button:hover {
+    border-color: var(--accent);
+    color: var(--accent);
+    background: var(--accent-light);
+  }
+
+  .settings-panel {
+    background: var(--card);
+    border-radius: 20px;
+    padding: 28px;
+    box-shadow: var(--shadow);
+    border: 1.5px solid var(--border);
+    margin-top: 16px;
+    display: none;
+  }
+
+  .settings-panel.open { display: block; }
+
+  .settings-panel h3 {
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--text);
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .setting-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 14px 0;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .setting-row:last-child { border-bottom: none; }
+
+  .setting-row .s-label {
+    font-size: 15px;
+    color: var(--text-sub);
+  }
+
+  .setting-row .s-control {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .s-control input[type="number"] {
+    width: 80px;
+    font-size: 16px;
+    padding: 8px 12px;
+    border: 1.5px solid var(--border);
+    border-radius: 10px;
+    background: #FDFAF6;
+    font-family: 'Noto Sans TC', sans-serif;
+    font-weight: 700;
+    color: var(--text);
+    text-align: center;
+    outline: none;
+    transition: border-color 0.2s;
+    -moz-appearance: textfield;
+  }
+
+  .s-control input[type="number"]:focus { border-color: var(--accent); }
+  .s-control input[type="number"]::-webkit-outer-spin-button,
+  .s-control input[type="number"]::-webkit-inner-spin-button { -webkit-appearance: none; }
+
+  .s-unit {
+    font-size: 14px;
+    color: var(--text-hint);
+  }
+
+  .footer {
+    text-align: center;
+    margin-top: 28px;
+    font-size: 13px;
+    color: var(--text-hint);
+    line-height: 1.8;
+  }
+
+  @media (max-width: 400px) {
+    .card, .result-card { padding: 28px 20px; }
+    .result-price { font-size: 52px; }
+    input[type="number"] { font-size: 26px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="wrapper">
+
+  <div class="header">
+    <span class="flag">🇯🇵</span>
+    <h1>日本代購定價計算機</h1>
+    <p>輸入日幣金額，立刻算出台幣售價</p>
+  </div>
+
+  <div class="card">
+    <div class="input-section">
+      <label>日幣原價 <span>（填入商品金額）</span></label>
+      <div class="input-row">
+        <div class="input-prefix">¥</div>
+        <input type="number" id="jpy" placeholder="43230" inputmode="numeric" oninput="calc()">
+        <button class="clear-btn" onclick="clearInput()" title="清除">✕</button>
+      </div>
+      <div class="hint" id="converted-hint"></div>
+    </div>
+
+    <div class="divider">費用明細</div>
+
+    <div class="breakdown">
+      <div class="breakdown-row">
+        <span class="label"><span class="dot"></span>商品換算台幣</span>
+        <span class="value" id="b-converted">—</span>
+      </div>
+      <div class="breakdown-row">
+        <span class="label"><span class="dot orange"></span>刷卡手續費 <span style="font-size:13px;color:var(--text-hint)" id="fee-label">（2%）</span></span>
+        <span class="value" id="b-fee">—</span>
+      </div>
+      <div class="breakdown-row">
+        <span class="label"><span class="dot dark"></span>運費</span>
+        <span class="value" id="b-ship">—</span>
+      </div>
+      <div class="breakdown-row" style="border-top: 1.5px dashed var(--border); padding-top: 14px; margin-top: 4px;">
+        <span class="label" style="font-weight:700; color: var(--text); font-size:17px;">成本小計</span>
+        <span class="value" style="font-size:20px; font-weight:700;" id="b-cost">—</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="result-card">
+    <div class="result-label">建議售價</div>
+    <div class="result-price" id="result-price">
+      <span class="empty-state">請輸入日幣金額</span>
+    </div>
+    <div class="result-sub" id="result-sub"></div>
+    <div id="result-profit"></div>
+  </div>
+
+  <div class="settings-toggle">
+    <button onclick="toggleSettings()">⚙️ 調整設定（匯率、手續費、利潤）</button>
+  </div>
+
+  <div class="settings-panel" id="settings-panel">
+    <h3>⚙️ 進階設定</h3>
+    <div class="setting-row">
+      <span class="s-label">匯率（1 日圓 = ？台幣）</span>
+      <div class="s-control">
+        <input type="number" id="s-rate" value="0.218" step="0.001" oninput="calc()">
+        <span class="s-unit">TWD</span>
+      </div>
+    </div>
+    <div class="setting-row">
+      <span class="s-label">刷卡手續費</span>
+      <div class="s-control">
+        <input type="number" id="s-fee" value="2" step="0.5" min="0" max="10" oninput="calc()">
+        <span class="s-unit">%</span>
+      </div>
+    </div>
+    <div class="setting-row">
+      <span class="s-label">運費</span>
+      <div class="s-control">
+        <input type="number" id="s-ship" value="800" step="50" oninput="calc()">
+        <span class="s-unit">NT$</span>
+      </div>
+    </div>
+    <div class="setting-row">
+      <span class="s-label">利潤目標</span>
+      <div class="s-control">
+        <input type="number" id="s-margin" value="10" step="1" min="1" max="50" oninput="calc()">
+        <span class="s-unit">%</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="footer">
+    售價公式：成本 ÷ (1 − 利潤%) ｜ 成本 = 商品換算 × (1 + 手續費%) + 運費<br>
+    所有設定可在上方調整
+  </div>
+
+</div>
+
+<script>
+function fmt(n) {
+  return 'NT$ ' + Math.round(n).toLocaleString('zh-TW');
+}
+
+function clearInput() {
+  document.getElementById('jpy').value = '';
+  calc();
+  document.getElementById('jpy').focus();
+}
+
+function toggleSettings() {
+  const panel = document.getElementById('settings-panel');
+  panel.classList.toggle('open');
+}
+
+function calc() {
+  const jpy = parseFloat(document.getElementById('jpy').value);
+  const rate = parseFloat(document.getElementById('s-rate').value) || 0.218;
+  const feePct = parseFloat(document.getElementById('s-fee').value) || 0;
+  const ship = parseFloat(document.getElementById('s-ship').value) || 0;
+  const marginPct = parseFloat(document.getElementById('s-margin').value) || 10;
+
+  document.getElementById('fee-label').textContent = '（' + feePct + '%）';
+
+  if (!jpy || jpy <= 0) {
+    document.getElementById('converted-hint').textContent = '';
+    document.getElementById('b-converted').textContent = '—';
+    document.getElementById('b-fee').textContent = '—';
+    document.getElementById('b-ship').textContent = fmt(ship);
+    document.getElementById('b-cost').textContent = '—';
+    document.getElementById('result-price').innerHTML = '<span class="empty-state">請輸入日幣金額</span>';
+    document.getElementById('result-sub').textContent = '';
+    document.getElementById('result-profit').innerHTML = '';
+    return;
+  }
+
+  const converted = jpy * rate;
+  const feeAmt = converted * (feePct / 100);
+  const cost = converted + feeAmt + ship;
+  const margin = marginPct / 100;
+  const price = cost / (1 - margin);
+  const profit = price - cost;
+  const rounded = Math.round(price / 100) * 100;
+
+  document.getElementById('converted-hint').textContent = '≈ ' + fmt(converted);
+  document.getElementById('b-converted').textContent = fmt(converted);
+  document.getElementById('b-fee').textContent = fmt(feeAmt);
+  document.getElementById('b-ship').textContent = fmt(ship);
+  document.getElementById('b-cost').textContent = fmt(cost);
+
+  document.getElementById('result-price').innerHTML =
+    '<span class="currency">NT$</span>' + Math.round(price).toLocaleString('zh-TW');
+
+  document.getElementById('result-sub').textContent =
+    '整數定價參考：' + rounded.toLocaleString('zh-TW') + ' 元';
+
+  document.getElementById('result-profit').innerHTML =
+    '<div class="result-profit">利潤約 ' + fmt(profit) + '（' + marginPct + '%）</div>';
+}
+
+calc();
+</script>
+</body>
+</html>
